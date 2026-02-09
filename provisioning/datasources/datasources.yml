@@ -1,0 +1,25 @@
+# ============================================================================
+# Grafana Datasource Provisioning
+# VULNERABILITY: Database credentials are exposed in Grafana UI
+# ============================================================================
+
+apiVersion: 1
+
+datasources:
+  - name: CitrineOS PostgreSQL
+    type: postgres
+    access: proxy
+    url: 192.168.20.20:5432
+    database: citrine
+    user: citrine
+    isDefault: true
+    editable: false
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+      timescaledb: false
+    secureJsonData:
+      password: citrine

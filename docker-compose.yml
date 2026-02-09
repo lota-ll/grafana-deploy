@@ -1,0 +1,46 @@
+# ============================================================================
+# EcoCharge Grafana Monitoring - Docker Compose
+# Сервер: 192.168.100.30
+# Datasource: PostgreSQL на 192.168.20.20:5432
+# ============================================================================
+
+services:
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: ecocharge-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # VULNERABILITY: Default admin credentials (не змінюємо навмисно)
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      # Дозволити анонімний перегляд (додатковий ризик)
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # Disable login brute-force protection for CTF
+      GF_AUTH_LOGIN_MAXIMUM_INACTIVE_LIFETIME_DURATION: "0"
+      GF_AUTH_LOGIN_MAXIMUM_LIFETIME_DURATION: "0"
+      # Server settings
+      GF_SERVER_ROOT_URL: "http://192.168.100.30:3000"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "false"
+      # Disable update checks
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      # Provisioning
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+    extra_hosts:
+      - "csms-db:192.168.20.20"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  grafana-data:
