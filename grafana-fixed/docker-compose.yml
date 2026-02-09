@@ -1,0 +1,80 @@
+# ============================================================================
+# EcoCharge Grafana Monitoring - Docker Compose (ULTIMATE FIX)
+# Сервер: 192.168.100.30
+# Datasource: PostgreSQL на 192.168.20.20:5432
+# FIX: Повне виправлення проблеми з логіном
+# ============================================================================
+
+services:
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: ecocharge-grafana
+    restart: unless-stopped
+    user: "0:0"  # CRITICAL: Run as root to avoid permission issues
+    ports:
+      - "3000:3000"
+    environment:
+      # Admin credentials
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      
+      # CRITICAL FIX: Force skip admin password change
+      GF_SECURITY_ADMIN_PASSWORD_HASH: ""
+      GF_SECURITY_SECRET_KEY: "SW2YcwTIb9zpOOhoPsMm"
+      
+      # Server settings
+      GF_SERVER_HTTP_ADDR: "0.0.0.0"
+      GF_SERVER_HTTP_PORT: "3000"
+      GF_SERVER_DOMAIN: "192.168.100.30"
+      GF_SERVER_ROOT_URL: "http://192.168.100.30:3000"
+      
+      # Session settings (CRITICAL)
+      GF_SESSION_PROVIDER: "file"
+      GF_SESSION_PROVIDER_CONFIG: "sessions"
+      GF_SESSION_COOKIE_NAME: "grafana_session"
+      GF_SESSION_COOKIE_SECURE: "false"
+      
+      # Security settings
+      GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "false"
+      GF_SECURITY_COOKIE_SECURE: "false"
+      GF_SECURITY_COOKIE_SAMESITE: "lax"
+      
+      # Disable features that might interfere
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_AUTO_ASSIGN_ORG: "true"
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: "Viewer"
+      
+      # Analytics
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      
+      # Paths
+      GF_PATHS_DATA: "/var/lib/grafana"
+      GF_PATHS_LOGS: "/var/log/grafana"
+      GF_PATHS_PLUGINS: "/var/lib/grafana/plugins"
+      GF_PATHS_PROVISIONING: "/etc/grafana/provisioning"
+      
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - grafana-logs:/var/log/grafana
+      - ./grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+      
+    extra_hosts:
+      - "csms-db:192.168.20.20"
+      
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  grafana-data:
+    driver: local
+  grafana-logs:
+    driver: local
