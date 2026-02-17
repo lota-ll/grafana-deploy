@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "EcoCharge CSMS Infrastructure Monitoring Dashboard\n\n--- INTERNAL NOTES (DO NOT SHARE) ---\nDB Connection: postgresql://citrine:citrine@192.168.20.20:5432/citrine\nHasura Admin Secret: CitrineOS!\nCSMS Admin: admin@citrineos.com / CitrineOS!\nRabbitMQ: guest:guest @ 192.168.20.20:5672\nMinIO: minioadmin:minioadmin @ 192.168.20.20:9000\n\nFLAG{d3f4ult_gr4f4n4_cr3ds_l34k}\n--- END INTERNAL NOTES ---",
+  "description": "EcoCharge CSMS Infrastructure Monitoring Dashboard\n\n--- INTERNAL NOTES (DO NOT SHARE) ---\n\nCSMS Endpoints:\n- CitrineOS UI: http://192.168.20.20:3000\n- CSMS Core API: http://192.168.20.20:8080\n- Hasura GraphQL: http://192.168.20.20:8090/v1/graphql\n- Prometheus: http://192.168.20.20:9090\n\nJump Host for maintenance:\n- SSH: operator@192.168.100.40\n\nNetwork Topology:\n- DMZ: 192.168.100.0/24\n- Internal: 192.168.20.0/24\n- OT: 172.16.0.0/24\n\nFLAG{gr4f4n4_d3f4ult_cr3ds}\n--- END INTERNAL NOTES ---",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -24,8 +24,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CITRINEOS_POSTGRESQL}"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -35,16 +35,17 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1 },
-              { "color": "red", "value": 3 }
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
             ]
           },
-          "mappings": []
+          "mappings": [
+            { "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } }, "type": "value" }
+          ]
         },
         "overrides": []
       },
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
       "id": 1,
       "options": {
         "colorMode": "background",
@@ -58,26 +59,20 @@
         },
         "textMode": "auto"
       },
-      "title": "Charging Stations Online",
+      "title": "CSMS Status",
       "type": "stat",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CITRINEOS_POSTGRESQL}"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*) AS online_stations FROM \"ChargingStations\" WHERE \"isOnline\" = true;",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "up{job=\"csms\"}",
           "refId": "A"
         }
       ]
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CITRINEOS_POSTGRESQL}"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -87,11 +82,12 @@
             "steps": [
               { "color": "green", "value": null }
             ]
-          }
+          },
+          "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
       "id": 2,
       "options": {
         "colorMode": "background",
@@ -105,73 +101,20 @@
         },
         "textMode": "auto"
       },
-      "title": "Total Transactions (24h)",
+      "title": "Active OCPP Connections",
       "type": "stat",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CITRINEOS_POSTGRESQL}"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*) AS total_transactions FROM \"Transactions\" WHERE \"createdAt\" >= NOW() - INTERVAL '24 hours';",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "ocpp_active_connections",
           "refId": "A"
         }
       ]
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CITRINEOS_POSTGRESQL}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "blue", "value": null }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
-      "id": 3,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "title": "Active OCPP Sessions",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CITRINEOS_POSTGRESQL}"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*) AS active_sessions FROM \"Transactions\" WHERE \"isActive\" = true;",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CITRINEOS_POSTGRESQL}"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -180,18 +123,19 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "orange", "value": 5 },
-              { "color": "red", "value": 10 }
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 80 }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
-      "id": 4,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
@@ -201,26 +145,64 @@
         },
         "textMode": "auto"
       },
-      "title": "Faulted Connectors",
+      "title": "CPU Usage",
       "type": "stat",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CITRINEOS_POSTGRESQL}"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*) AS faulted FROM \"LatestStatusNotifications\" WHERE status = 'Faulted';",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
           "refId": "A"
         }
       ]
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CITRINEOS_POSTGRESQL}"
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "title": "Memory Usage",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -237,7 +219,7 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "isOnline" },
+            "matcher": { "id": "byName", "options": "status" },
             "properties": [
               {
                 "id": "custom.cellOptions",
@@ -247,20 +229,17 @@
                 }
               },
               {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    { "color": "red", "value": null },
-                    { "color": "green", "value": 1 }
-                  ]
-                }
+                "id": "mappings",
+                "value": [
+                  { "options": { "Connected": { "color": "green", "index": 0 } }, "type": "value" },
+                  { "options": { "Disconnected": { "color": "red", "index": 1 } }, "type": "value" }
+                ]
               }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
       "id": 5,
       "options": {
         "cellHeight": "sm",
@@ -268,118 +247,91 @@
         "showHeader": true,
         "sortBy": []
       },
-      "title": "Charging Stations Overview",
+      "title": "Charging Stations Status",
       "type": "table",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CITRINEOS_POSTGRESQL}"
-          },
-          "editorMode": "code",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "ocpp_station_info",
           "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT id, \"chargePointVendor\", \"chargePointModel\", \"isOnline\", \"createdAt\" FROM \"ChargingStations\" ORDER BY id;",
+          "instant": true,
           "refId": "A"
         }
       ]
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CITRINEOS_POSTGRESQL}"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
+          "color": { "mode": "palette-classic" },
           "custom": {
-            "align": "auto",
-            "cellOptions": { "type": "auto" },
-            "inspect": false
-          }
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
       "id": 6,
       "options": {
-        "cellHeight": "sm",
-        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
-        "showHeader": true,
-        "sortBy": []
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
       },
-      "title": "Recent OCPP Messages",
-      "type": "table",
+      "title": "OCPP Messages Rate",
+      "type": "timeseries",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CITRINEOS_POSTGRESQL}"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT \"stationId\", action, origin, \"createdAt\" FROM \"OCPPMessages\" ORDER BY \"createdAt\" DESC LIMIT 20;",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CITRINEOS_POSTGRESQL}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": { "type": "auto" },
-            "inspect": false
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
-      "id": 7,
-      "options": {
-        "cellHeight": "sm",
-        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
-        "showHeader": true,
-        "sortBy": []
-      },
-      "title": "Latest Status Notifications",
-      "type": "table",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "${DS_CITRINEOS_POSTGRESQL}"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT \"stationId\", \"evseId\", \"connectorId\", status, \"timestamp\" FROM \"LatestStatusNotifications\" ORDER BY \"timestamp\" DESC;",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(ocpp_messages_total[5m])",
+          "legendFormat": "{{action}}",
           "refId": "A"
         }
       ]
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
-      "id": 8,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 12 },
+      "id": 7,
       "title": "System Information",
       "type": "row"
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "${DS_CITRINEOS_POSTGRESQL}"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
-      "description": "Internal system notes:\n\nDatabase maintenance window: Sunday 03:00-05:00 UTC\nBackup script: /opt/maintenance/backup.sh on CSMS server\n\nConnection details for manual access:\n  psql -h 192.168.20.20 -U citrine -d citrine -p 5432\n  Password: citrine\n\nHasura Console: http://192.168.20.20:8090/console\n  Admin Secret: CitrineOS!\n\nCSMS REST API: http://192.168.20.20:8080/docs\n\nRabbitMQ Management: http://192.168.20.20:15672\n  Credentials: guest / guest\n\nMinIO Console: http://192.168.20.20:9001\n  Credentials: minioadmin / minioadmin",
-      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 23 },
-      "id": 9,
+      "description": "Internal system documentation:\n\n## Access Information\n\n**CSMS Services (Internal Network 192.168.20.0/24):**\n- CitrineOS UI: http://192.168.20.20:3000\n- CSMS Core API: http://192.168.20.20:8080\n- Hasura Console: http://192.168.20.20:8090/console\n- Prometheus: http://192.168.20.20:9090\n\n**Jump Host (for maintenance):**\n- SSH: operator@192.168.100.40\n- Access to: Internal (192.168.20.0/24), OT (172.16.0.0/24)\n\n**OT Network (172.16.0.0/24):**\n- CP001: 172.16.0.40 (OCPP 1.6)\n- CP002: 172.16.0.60 (OCPP 2.0.1)\n\n---\nMaintenance window: Sunday 03:00-05:00 UTC",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 13 },
+      "id": 8,
       "options": {
         "code": { "language": "plaintext", "showLineNumbers": false },
-        "content": "## EcoCharge CSMS Monitoring\n\n**Database:** CitrineOS PostgreSQL (192.168.20.20:5432)\n\n**Monitored Services:**\n- OCPP WebSocket Connections (ports 8081, 8092)\n- Transaction Processing\n- Charging Station Status\n- OCPP Message Flow\n\n**Maintenance Contact:** ops@ecocharge.internal",
+        "content": "## EcoCharge CSMS Monitoring\n\n**Monitored Services:**\n- OCPP WebSocket Connections\n- Transaction Processing\n- Charging Station Status\n- System Resources\n\n**Data Source:** Prometheus (192.168.20.20:9090)\n\n**Contact:** ops@ecocharge.internal",
         "mode": "markdown"
       },
       "title": "System Notes",
@@ -387,18 +339,18 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["ecocharge", "csms", "ocpp"],
+  "tags": ["ecocharge", "csms", "ocpp", "monitoring"],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-24h",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "EcoCharge CSMS Overview",
   "uid": "ecocharge-csms-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

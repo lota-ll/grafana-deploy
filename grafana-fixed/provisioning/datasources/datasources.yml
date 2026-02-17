@@ -1,25 +1,22 @@
 # ============================================================================
 # Grafana Datasource Provisioning
-# VULNERABILITY: Database credentials are exposed in Grafana UI
+# 
+# VULNERABILITY: Dashboard description contains internal network information
+# Default credentials: admin / admin
 # ============================================================================
 
 apiVersion: 1
 
 datasources:
-  - name: CitrineOS PostgreSQL
-    type: postgres
+  # Primary datasource - Prometheus for CSMS metrics
+  - name: Prometheus
+    type: prometheus
     access: proxy
-    url: 192.168.20.20:5432
-    database: citrine
-    user: citrine
+    url: http://192.168.20.20:9090
     isDefault: true
     editable: false
     jsonData:
-      sslmode: disable
-      maxOpenConns: 5
-      maxIdleConns: 2
-      connMaxLifetime: 14400
-      postgresVersion: 1600
-      timescaledb: false
-    secureJsonData:
-      password: citrine
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.47.0
